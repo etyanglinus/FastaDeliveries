@@ -8,13 +8,13 @@ import {
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCQpRXx3zNwG0E2GBeK3KbKpvT7brifAqY",
+  apiKey: "AIzaSyBhPVJQjVKv5BqlJIyg1p8FtyLlqBzY1sg",
   authDomain: "fasta-rides-457315.firebaseapp.com",
   projectId: "fasta-rides-457315",
   storageBucket: "fasta-rides-457315.firebasestorage.app",
   messagingSenderId: "833886382257",
-  appId: "1:833886382257:web:78de3f75643a8f8995da90",
-  measurementId: "G-LRL6QBT4HK"
+  appId: "1:833886382257:web:b347c19f1400383595da90",
+  measurementId: "G-R3Q3BLB5ZK"
 };
 
 const firebaseApp = !getApps().length
