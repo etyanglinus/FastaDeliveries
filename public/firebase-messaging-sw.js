@@ -6,13 +6,13 @@ importScripts(
 );
 // // Initialize the Firebase app in the service worker by passing the generated config
 const firebaseConfig = {
-  apiKey: "AIzaSyCQpRXx3zNwG0E2GBeK3KbKpvT7brifAqY",
+  apiKey: "AIzaSyBhPVJQjVKv5BqlJIyg1p8FtyLlqBzY1sg",
   authDomain: "fasta-rides-457315.firebaseapp.com",
   projectId: "fasta-rides-457315",
   storageBucket: "fasta-rides-457315.firebasestorage.app",
   messagingSenderId: "833886382257",
-  appId: "1:833886382257:web:4823e7d0334a723695da90",
-  measurementId: "G-B8TYEPE09Z"
+  appId: "1:833886382257:web:b347c19f1400383595da90",
+  measurementId: "G-R3Q3BLB5ZK"
 };
 
 firebase?.initializeApp(firebaseConfig);
