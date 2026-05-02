@@ -1,108 +1,105 @@
 import { store } from "redux/store";
 
-// export const getAmountWithSign = (amount, needDecimal = true) => {
-//   const stores = store?.getState();
-//   const { configData } = stores?.configData || {};
-//   let newAmount = needDecimal
-//     ? ((amount * 100) / 100).toFixed(
-//         Number.parseInt(configData?.digit_after_decimal_point)
-//       )
-//     : (amount * 100) / 100;
-//   if (configData?.currency_symbol_direction === "left") {
-//     return `${configData?.currency_symbol}${newAmount}`;
-//   } else if (configData?.currency_symbol_direction === "right") {
-//     return `${newAmount}${configData?.currency_symbol}`;
-//   }
-//   return amount;
-// };
+/* -----------------------------------------
+   INTERNAL: get config safely
+------------------------------------------ */
+const getConfig = () => {
+  const state = store?.getState();
+  return state?.configData?.configData || state?.configData || {};
+};
 
-export const getAmountWithSign = (amount, needDecimal = true) => {
+/* -----------------------------------------
+   1. MAIN MONEY FORMATTER (PRODUCTION SAFE)
+   Use everywhere: cart, checkout, totals
+------------------------------------------ */
+export const getAmountWithSign = (amount) => {
   if (amount == null || isNaN(Number(amount))) return "";
 
-  const { configData } = store?.getState()?.configData || {};
-  const decimals = configData?.digit_after_decimal_point ?? 2;
+  const configData = getConfig();
+
   const symbol = configData?.currency_symbol || "";
   const direction = configData?.currency_symbol_direction || "left";
+  const decimals = configData?.digit_after_decimal_point ?? 2;
 
-  // Function to format large numbers
-  const formatLargeNumber = (num) => {
-    if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(1) + "B";
-    if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
-    if (num >= 100_000) return (num / 1_000).toFixed(1) + "K";
-    return needDecimal ? num.toFixed(decimals) : num;
-  };
+  const formattedNumber = new Intl.NumberFormat(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: decimals,
+  }).format(Number(amount));
 
-  // Format the amount
-  const formattedAmount = formatLargeNumber(Number(amount));
+  const result =
+    direction === "left"
+      ? `${symbol} ${formattedNumber}`
+      : `${formattedNumber} ${symbol}`;
 
-  // Return amount with currency symbol
-  return direction === "left" ? `${symbol}${formattedAmount}` : `${formattedAmount}${symbol}`;
+  return result.trim();
 };
 
 
+/* -----------------------------------------
+   2. UI-ONLY COMPACT FORMAT (optional)
+   Example: 5.7K, 1.2M
+   DO NOT use in checkout/cart
+------------------------------------------ */
+export const formatCompactAmount = (amount) => {
+  if (amount == null || isNaN(Number(amount))) return "";
+
+  const num = Number(amount);
+
+  if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(1) + "B";
+  if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
+  if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
+
+  return new Intl.NumberFormat().format(num);
+};
+
+
+/* -----------------------------------------
+   3. DISCOUNT CALCULATION (FIXED)
+------------------------------------------ */
 export const getDiscountedAmount = (
   price,
   discount,
   discountType,
-  storeDiscount,
-  quantity
+  quantity = 1
 ) => {
-  //product wise discount
-  let mainPrice = price;
-  let q = quantity ? quantity : 1;
+  let finalPrice = Number(price);
+
   if (discount > 0) {
     if (discountType === "amount") {
-      mainPrice = price - discount * q;
-    } else if (discountType === "percent" || discountType === "fixed") {
-      mainPrice = price - (discount / 100) * price;
+      finalPrice -= discount * quantity;
+    } else if (
+      discountType === "percent" ||
+      discountType === "fixed"
+    ) {
+      finalPrice -= (discount / 100) * finalPrice;
     }
   }
-  return mainPrice;
-};
-export const getSelectedAddOn = (add_ons) => {
-  let add_on = "";
-  if (add_ons?.length > 0) {
-    add_ons?.map((item, index) => {
-      if (item?.isChecked) {
-        add_on += `${index !== 0 ? ", " : ""}${item.name}`;
-      }
-    });
-  }
-  return add_on;
+
+  return finalPrice;
 };
 
-// export const getDiscountAmount = (
-//   price,
-//   discount,
-//   discountType,
-//   storeDiscount
-// ) => {
-//   //product wise discount
-//   let mainPrice = price;
-//
-//   if (Number.parseInt(storeDiscount) === 0) {
-//     if (discountType === "amount") {
-//       mainPrice = discount;
-//     } else if (discountType === "percent") {
-//       mainPrice = price * (discount / 100);
-//     }
-//   } else {
-//     if (discountType === "amount" || discountType === "fixed") {
-//       mainPrice = storeDiscount;
-//     } else if (discountType === "percent") {
-//       mainPrice = price * (storeDiscount / 100);
-//     }
-//   }
-//   return mainPrice;
-// };
+
+/* -----------------------------------------
+   4. ADD-ON FORMATTER
+------------------------------------------ */
+export const getSelectedAddOn = (add_ons = []) => {
+  return add_ons
+    .filter((item) => item?.isChecked)
+    .map((item) => item.name)
+    .join(", ");
+};
+
+
+/* -----------------------------------------
+   5. REFERRAL DISCOUNT
+------------------------------------------ */
 export const getReferDiscount = (
-  totalAmountForRefer,
+  totalAmount,
   refDiscount,
-  refPercentage
+  refType
 ) => {
-  if (refPercentage === "percentage") {
-    return (refDiscount / 100) * totalAmountForRefer;
-  } else {
-    return refDiscount;
+  if (refType === "percentage") {
+    return (refDiscount / 100) * totalAmount;
   }
+  return refDiscount;
 };
